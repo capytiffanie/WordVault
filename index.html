@@ -432,8 +432,9 @@ textarea{resize:vertical;min-height:60px;}
           <div class="result-score" id="result-score"></div>
           <div class="result-label" id="result-label"></div>
           <div id="result-wrong-list"></div>
-          <div class="btn-row" style="justify-content:center;margin-top:24px">
-            <button class="btn btn-primary" onclick="restartQuiz()">再測一次</button>
+          <div class="btn-row" style="justify-content:center;margin-top:24px;flex-wrap:wrap;">
+            <button class="btn btn-primary" id="retry-wrong-btn" onclick="retryWrongOnly()">🔁 只測答錯的</button>
+            <button class="btn btn-secondary" onclick="restartQuiz()">再測一次（全部）</button>
             <button class="btn btn-secondary" onclick="backToSetup()">重新設定</button>
           </div>
         </div>
@@ -1040,15 +1041,19 @@ window.startQuiz=function(){
   if(quizMode==='flash'){document.getElementById('quiz-write').style.display='none';document.getElementById('quiz-flash').style.display='block';showFlashCard();}
   else{document.getElementById('quiz-flash').style.display='none';document.getElementById('quiz-write').style.display='block';showWriteCard();}
 };
-function showFlashCard(){
+function showFlashCard() {
   if(quizIndex>=quizWords.length){showResult();return;}
   var w=quizWords[quizIndex];cardFlipped=false;
-  document.getElementById('flashcard').classList.remove('flipped');
-  document.getElementById('flash-front').innerHTML='<div class="card-word">'+esc(w.word)+'</div>'+(w.pron?'<div class="card-pron">'+esc(w.pron)+'</div>':'');
-  document.getElementById('flash-back').innerHTML='<div class="card-def">'+esc(w.def)+'</div>'+(w.example?'<div class="card-example">'+esc(w.example)+'</div>':'')+(w.note?'<div class="card-note">💡 '+esc(w.note)+'</div>':'');
-  document.getElementById('flash-hint').style.display='block';
-  document.getElementById('flash-actions').style.display='none';
-  updateQuizProgress('flash');
+  var card=document.getElementById('flashcard');
+  // First flip back, then update content after animation completes
+  card.classList.remove('flipped');
+  setTimeout(function(){
+    document.getElementById('flash-front').innerHTML='<div class="card-word">'+esc(w.word)+'</div>'+(w.pron?'<div class="card-pron">'+esc(w.pron)+'</div>':'');
+    document.getElementById('flash-back').innerHTML='<div class="card-def">'+esc(w.def)+'</div>'+(w.example?'<div class="card-example">'+esc(w.example)+'</div>':'')+(w.note?'<div class="card-note">💡 '+esc(w.note)+'</div>':'');
+    document.getElementById('flash-hint').style.display='block';
+    document.getElementById('flash-actions').style.display='none';
+    updateQuizProgress('flash');
+  }, 520); // slightly after the 0.5s CSS transition
 }
 window.flipCard=function(){
   if(cardFlipped)return;cardFlipped=true;
@@ -1161,7 +1166,20 @@ function showResult(){
     quizWrong.forEach(function(w){wrongHtml+='<div class="wrong-item"><span class="wi-word">'+esc(w.word)+'</span><span class="wi-def">'+esc(w.def)+'</span></div>';});
   }
   document.getElementById('result-wrong-list').innerHTML=wrongHtml;
+  // Show/hide retry wrong button
+  var retryBtn=document.getElementById('retry-wrong-btn');
+  if(retryBtn) retryBtn.style.display=quizWrong.length?'':'none';
 }
+window.retryWrongOnly=function(){
+  if(!quizWrong.length){ alert('沒有答錯的單字！'); return; }
+  var wrongCopy=quizWrong.slice();
+  // shuffle
+  for(var i=wrongCopy.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var tmp=wrongCopy[i];wrongCopy[i]=wrongCopy[j];wrongCopy[j]=tmp;}
+  quizWords=wrongCopy;quizIndex=0;quizCorrect=0;quizWrong=[];
+  document.getElementById('quiz-result').style.display='none';
+  if(quizMode==='flash'){document.getElementById('quiz-flash').style.display='block';showFlashCard();}
+  else{document.getElementById('quiz-write').style.display='block';showWriteCard();}
+};
 window.restartQuiz=function(){
   quizWords=quizWords.concat(quizWrong);
   for(var i=quizWords.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var tmp=quizWords[i];quizWords[i]=quizWords[j];quizWords[j]=tmp;}
