@@ -477,7 +477,7 @@ textarea{resize:vertical;min-height:60px;}
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-app.js";
 import { getFirestore, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-firestore.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut as fbSignOut } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-auth.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut as fbSignOut } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAz40jIUz0IeiTiwzce1Mh-1Ud2z5FTbbI",
@@ -520,17 +520,6 @@ function setSyncStatus(state) {
 // AUTH
 document.getElementById('loading-screen').classList.add('show');
 
-// Handle redirect result first (for mobile)
-getRedirectResult(auth).then(function(result) {
-  // result handled by onAuthStateChanged below
-}).catch(function(e) {
-  if (e.code !== 'auth/no-current-user') {
-    document.getElementById('loading-screen').classList.remove('show');
-    document.getElementById('login-screen').classList.add('show');
-    alert('登入失敗：' + e.message);
-  }
-});
-
 onAuthStateChanged(auth, function(user) {
   document.getElementById('loading-screen').classList.remove('show');
   if (user) {
@@ -549,16 +538,9 @@ onAuthStateChanged(auth, function(user) {
 });
 
 document.getElementById('btn-google-login').addEventListener('click', function() {
-  // Use redirect on mobile (iOS Safari doesn't support popup)
-  var isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-  if (isMobile) {
-    signInWithRedirect(auth, provider).catch(function(e) { alert('登入失敗：' + e.message); });
-  } else {
-    signInWithPopup(auth, provider).catch(function(e) {
-      // Fallback to redirect if popup fails
-      signInWithRedirect(auth, provider);
-    });
-  }
+  signInWithPopup(auth, provider).catch(function(e) {
+    alert('登入失敗：' + e.message);
+  });
 });
 window.signOut = function() { fbSignOut(auth); };
 
