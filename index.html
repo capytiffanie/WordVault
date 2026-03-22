@@ -1045,15 +1045,19 @@ function showFlashCard() {
   if(quizIndex>=quizWords.length){showResult();return;}
   var w=quizWords[quizIndex];cardFlipped=false;
   var card=document.getElementById('flashcard');
-  // First flip back, then update content after animation completes
+  // Clear back face immediately so it's blank during the flip animation
+  document.getElementById('flash-back').innerHTML='';
+  document.getElementById('flash-actions').style.display='none';
+  document.getElementById('flash-hint').style.display='none';
+  // Flip card back to front
   card.classList.remove('flipped');
+  // Only fill in new content after animation completes
   setTimeout(function(){
     document.getElementById('flash-front').innerHTML='<div class="card-word">'+esc(w.word)+'</div>'+(w.pron?'<div class="card-pron">'+esc(w.pron)+'</div>':'');
     document.getElementById('flash-back').innerHTML='<div class="card-def">'+esc(w.def)+'</div>'+(w.example?'<div class="card-example">'+esc(w.example)+'</div>':'')+(w.note?'<div class="card-note">💡 '+esc(w.note)+'</div>':'');
     document.getElementById('flash-hint').style.display='block';
-    document.getElementById('flash-actions').style.display='none';
     updateQuizProgress('flash');
-  }, 520); // slightly after the 0.5s CSS transition
+  }, 520);
 }
 window.flipCard=function(){
   if(cardFlipped)return;cardFlipped=true;
