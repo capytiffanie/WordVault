@@ -1101,50 +1101,40 @@ function buildLetterBoxes(word){
 window.syncLetterBoxes=function(){
   var w=quizWords[quizIndex];
   var val=document.getElementById('write-input').value;
-  var boxes=document.querySelectorAll('#write-hint-boxes .letter-box:not(.word-space)');
-  var inputIdx=0; // index into val (which contains all non-space letters except first)
-  var boxIdx=0;
-  for(var i=0;i<w.word.length;i++){
-    if(w.word[i]===' ')continue;
-    var box=boxes[boxIdx];
-    if(boxIdx===0){ boxIdx++; continue; } // first letter is hint, skip
-    var ch=val[inputIdx]||'';
+  // word[0] is hint; user types word[1..end] including spaces
+  // all boxes including word-space, indexed by position in word
+  var allBoxes=document.querySelectorAll('#write-hint-boxes .letter-box');
+  // allBoxes[0] = hint (word[0]), allBoxes[1] = word[1], etc.
+  for(var i=1;i<w.word.length;i++){
+    var box=allBoxes[i];
+    if(!box)continue;
+    if(w.word[i]===' ')continue; // space boxes have no text
+    var ch=val[i-1]||'';
     box.textContent=ch;
-    box.classList.toggle('active', inputIdx===val.length-1 && !writeAnswered);
-    boxIdx++;
-    inputIdx++;
+    box.classList.toggle('active',i-1===val.length-1&&!writeAnswered);
   }
 };
 window.checkWrite=function(){
   if(writeAnswered){nextWrite();return;}
   var w=quizWords[quizIndex];
   var inp=document.getElementById('write-input');
-  // Strip spaces from correct answer for comparison
-  var correctNoSpace=w.word.replace(/ /g,'').toLowerCase();
-  // User types all letters except first; prepend first letter
-  var firstLetter=w.word.replace(/ /g,'')[0];
-  var typed=(firstLetter+inp.value).toLowerCase();
+  // user types word[1..end] (spaces included), we prepend word[0]
+  var typed=(w.word[0]+(inp.value||'')).toLowerCase();
+  var correct=w.word.toLowerCase();
   writeAnswered=true;
   inp.disabled=true;
   document.getElementById('write-submit-btn').textContent='下一題 →';
-  // Colour letter boxes
-  var boxes=document.querySelectorAll('#write-hint-boxes .letter-box:not(.word-space)');
-  var inputIdx=0;
-  var boxIdx=0;
-  var nonSpaceWord=w.word.replace(/ /g,'');
-  for(var i=0;i<w.word.length;i++){
-    if(w.word[i]===' ')continue;
-    var box=boxes[boxIdx];
+  // Colour boxes — allBoxes[i] maps to word[i]
+  var allBoxes=document.querySelectorAll('#write-hint-boxes .letter-box');
+  for(var i=1;i<w.word.length;i++){
+    var box=allBoxes[i];
+    if(!box||w.word[i]===' ')continue;
+    var ch=inp.value[i-1]||'';
     box.classList.remove('active');
-    if(boxIdx>0){
-      var ch=inp.value[inputIdx]||'';
-      box.textContent=ch||'_';
-      box.classList.add(ch.toLowerCase()===nonSpaceWord[boxIdx].toLowerCase()?'correct':'wrong');
-      inputIdx++;
-    }
-    boxIdx++;
+    box.textContent=ch||'_';
+    box.classList.add(ch.toLowerCase()===w.word[i].toLowerCase()?'correct':'wrong');
   }
-  if(typed===correctNoSpace){
+  if(typed===correct){
     quizCorrect++;
     document.getElementById('write-feedback').textContent='✓ 正確！';
     document.getElementById('write-feedback').className='write-feedback correct';
